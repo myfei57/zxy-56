@@ -23,7 +23,7 @@ func (s *VelocityService) SetFaceThreshold(hoodID string, threshold float64) err
 	if threshold <= 0 {
 		return fmt.Errorf("face velocity threshold must be positive")
 	}
-	return s.blobs.Save("velocity", hoodID, VelocityState{HoodID: hoodID, Threshold: fullOpenThreshold})
+	return s.blobs.Save("velocity", hoodID, VelocityState{HoodID: hoodID, Threshold: threshold})
 }
 
 func (s *VelocityService) Threshold(hoodID string) (float64, error) {
@@ -44,5 +44,3 @@ func (s *VelocityService) Verdict(hoodID string, measured float64) error {
 	}
 	return nil
 }
-
-const fullOpenThreshold = 0.5
