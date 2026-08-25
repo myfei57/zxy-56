@@ -1,6 +1,11 @@
 package audit
 
 func (s *Service) Confirm(source string, subject string, detail string) error {
+	if s.onConfirm != nil {
+		if err := s.onConfirm(subject); err != nil {
+			return err
+		}
+	}
 	return s.Record(source, subject, "confirm", detail)
 }
 
