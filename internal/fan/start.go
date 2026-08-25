@@ -25,9 +25,6 @@ func (c *Controller) StartRow(rowID string) error {
 			return err
 		}
 	}
-	if err := c.doors.Open(rowID); err != nil {
-		return err
-	}
 	for _, fan := range fans {
 		if fan.Role != "end" {
 			continue
@@ -47,6 +44,9 @@ func (c *Controller) StartRow(rowID string) error {
 		if !current.Running() {
 			return fmt.Errorf("end fan %s not running before door release", fan.ID)
 		}
+	}
+	if err := c.doors.Open(rowID); err != nil {
+		return err
 	}
 	if c.audit != nil {
 		_ = c.audit.Record("fan", rowID, "row-start", "morning")
