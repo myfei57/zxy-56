@@ -35,16 +35,21 @@ func (s *MoveService) Move(sashID string, height int) error {
 	if height <= 0 || height > item.FullOpen {
 		return fmt.Errorf("sash height out of range")
 	}
-	record := MoveRecord{SashID: sashID, Height: height, At: time.Now()}
-	if err := s.blobs.Save("sash-move", sashID, record); err != nil {
-		return err
-	}
+	// Persist the linked airflow reading (and face-velocity threshold) derived
+	// from the new sash height BEFORE recording the displacement. Otherwise a
+	// reader reacting to the sash-move record can still observe the stale
+	// airflow reading, compute makeup air from the old value, and briefly drive
+	// the hood negative pressure back to positive.
 	flow := flowFor(item, height)
 	if err := s.airflow(item.HoodID, flow); err != nil {
 		return err
 	}
 	threshold := ThresholdFor(item.FullOpen, height)
 	if err := s.notifyFlow(item.HoodID, threshold); err != nil {
+		return err
+	}
+	record := MoveRecord{SashID: sashID, Height: height, At: time.Now()}
+	if err := s.blobs.Save("sash-move", sashID, record); err != nil {
 		return err
 	}
 	item.Height = height
