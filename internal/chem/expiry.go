@@ -30,7 +30,16 @@ func (s *ExpiryService) Revise(chemID string, effectiveUntil time.Time) error {
 	if err := s.blobs.Save("chem", chemID, chem); err != nil {
 		return err
 	}
-	return s.blobs.Save("chem-expiry", chemID, ExpiryRecord{ChemID: chemID, EffectiveUntil: effectiveUntil})
+	if err := s.blobs.Save("chem-expiry", chemID, ExpiryRecord{ChemID: chemID, EffectiveUntil: effectiveUntil}); err != nil {
+		return err
+	}
+	// Keep the in-memory cache in sync with the persisted record so that
+	// EffectiveDate (the source the issue gate reads from) reflects the
+	// current expiry. Without this, a downward revision would still be
+	// shadowed by the stale cached value and an expired reagent could be
+	// issued.
+	s.cache[chemID] = effectiveUntil
+	return nil
 }
 
 func (s *ExpiryService) EffectiveDate(chemID string) (time.Time, error) {
